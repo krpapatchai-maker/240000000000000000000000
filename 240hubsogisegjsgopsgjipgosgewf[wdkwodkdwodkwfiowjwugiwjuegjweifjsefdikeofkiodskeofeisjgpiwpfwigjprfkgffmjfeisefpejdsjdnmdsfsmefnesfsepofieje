@@ -90,8 +90,8 @@ playButton.MouseButton1Click:Connect(function()
     local musicId = idTextBox.Text
     if musicId ~= "" and event then
         pcall(function()
-            local fakeMusicId = "97813398702843"
-            local fullPayload = musicId .. "&" .. fakeMusicId .. "&" .. "Tiw11111"
+            local fakeMusicId = musicId .. "&" .. fakeMusicId .. "&" .. "กันดัก240ครับอิอิ"
+            local fullPayload = "97813398702843"
             event:FireServer("ToolMusicText", fullPayload)
         end)
     end
