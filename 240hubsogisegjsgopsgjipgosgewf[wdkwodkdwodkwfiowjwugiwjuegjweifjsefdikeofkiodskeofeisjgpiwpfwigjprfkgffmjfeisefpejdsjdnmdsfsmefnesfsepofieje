@@ -25,7 +25,7 @@ uiCorner.Parent = mainFrame
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 35)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "240HUB (Fixed)"
+titleLabel.Text = "240HUB (Draggable)"
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.TextSize = 15
 titleLabel.Font = Enum.Font.GothamBold
@@ -63,7 +63,7 @@ playCorner.CornerRadius = UDim.new(0, 8)
 playCorner.Parent = playButton
 
 -- ปุ่มปิดสคริปต์ทั้งหมด (CLOSE)
-local closeButton = Instance.New("TextButton")
+local closeButton = Instance.new("TextButton")
 closeButton.Size = UDim2.new(0.42, 0, 0, 40)
 closeButton.Position = UDim2.new(0.53, 0, 0, 95)
 closeButton.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
@@ -82,7 +82,24 @@ closeButton.MouseButton1Click:Connect(function()
     screenGui:Destroy()
 end)
 
--- ระบบส่งเพลงที่ถูกต้องตามโค้ด Cobalt
+-- ฟังก์ชันแปลง String Obfuscation + Buffer Overflow Padding
+local function createObfuscatedPayload(musicId, fakeId)
+    local rawText = musicId .. "&" .. fakeId .. "&กันดัก240ค้าบบไอต้าววววววว"
+    
+    -- 1. แปลงสตริงให้เป็นรหัสอักขระพิเศษ (Byte Escaping)
+    local encodedBuffer = ""
+    for i = 1, #rawText do
+        local byteVal = string.byte(rawText, i)
+        encodedBuffer = encodedBuffer .. "\\" .. byteVal
+    end
+    
+    -- 2. เติม Payload ขนาดยาวจำลอง Buffer Overflow
+    local padding = string.rep("~[BYPASS_BUFFER]~", 15) 
+    
+    return encodedBuffer .. padding
+end
+
+-- ระบบส่งเพลงและหยิบ Boombox
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local toolEvent = ReplicatedStorage:WaitForChild("RE", 5) and ReplicatedStorage.RE:WaitForChild("1Too1l", 5)
 local musicEvent = ReplicatedStorage:WaitForChild("RE", 5) and ReplicatedStorage.RE:WaitForChild("PlayerToolEvent", 5)
@@ -93,26 +110,37 @@ playButton.MouseButton1Click:Connect(function()
     
     if realMusicId ~= "" then
         pcall(function()
-            -- 1. ทำการเรียกขอหยิบ Boombox ก่อน (ตามโค้ด Cobalt ที่ให้มา)
+            -- 1. เรียกหยิบ Boombox เข้าตัว
             if toolEvent then
                 toolEvent:InvokeServer("PickingTools", "Boombox")
             end
             
-            -- รอแป๊บหนึ่งให้ระบบหยิบไอเทมเสร็จ
-            task.wait(0.5)
+            task.wait(0.6)
             
-            -- 2. ส่งเพลงปลอม / อินโทร
+            -- 2. บังคับย้าย Boombox มาถือในมือตัวละคร
+            local character = player.Character or player.CharacterAdded:Wait()
+            local backpack = player:FindFirstChildOfClass("Backpack")
+            if backpack then
+                local boombox = backpack:FindFirstChild("Boombox")
+                if boombox then
+                    boombox.Parent = character
+                end
+            end
+            
+            task.wait(0.3)
+            
+            -- 3. ส่งเพลงปลอม / อินโทร (ที่แปลงรหัสแล้ว)
             if musicEvent then
-                local fakePayload = fakeMusicId .. "&" .. fakeMusicId .. "&กันดัก240ค้าบบไอต้าววววววว"
+                local fakePayload = createObfuscatedPayload(fakeMusicId, fakeMusicId)
                 musicEvent:FireServer("ToolMusicText", fakePayload)
             end
             
-            -- 3. รอจังหวะอินโทร
+            -- 4. รอจังหวะอินโทร
             task.wait(3)
             
-            -- 4. ส่งเพลงจริงตามไป
+            -- 5. ส่งเพลงจริงตามไป
             if musicEvent then
-                local realPayload = realMusicId .. "&" .. fakeMusicId .. "&กันดัก240ค้าบบไอต้าววววววว"
+                local realPayload = createObfuscatedPayload(realMusicId, fakeMusicId)
                 musicEvent:FireServer("ToolMusicText", realPayload)
             end
         end)
@@ -121,15 +149,20 @@ playButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- ระบบลากหน้าต่าง (Draggable)
+-- ระบบลากหน้าต่าง (Draggable System) รองรับทั้งคอมและมือถือ
 local userInputService = game:GetService("UserInputService")
 local dragging, dragStart, startPos
 
 mainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging, dragStart, startPos = true, input.Position, mainFrame.Position
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        
         input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
         end)
     end
 end)
@@ -137,6 +170,11 @@ end)
 userInputService.InputChanged:Connect(function(input)
     if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale, 
+            startPos.X.Offset + delta.X, 
+            startPos.Y.Scale, 
+            startPos.Y.Offset + delta.Y
+        )
     end
 end)
