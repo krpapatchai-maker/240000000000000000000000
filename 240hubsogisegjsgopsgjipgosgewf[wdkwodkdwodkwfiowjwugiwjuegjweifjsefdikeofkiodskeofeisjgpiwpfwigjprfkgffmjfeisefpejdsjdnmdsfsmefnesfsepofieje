@@ -25,7 +25,7 @@ uiCorner.Parent = mainFrame
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 35)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "240HUB (Stable Fix)"
+titleLabel.Text = "240HUB Simple Player"
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.TextSize = 15
 titleLabel.Font = Enum.Font.GothamBold
@@ -36,7 +36,7 @@ idTextBox.Size = UDim2.new(0.9, 0, 0, 35)
 idTextBox.Position = UDim2.new(0.05, 0, 0, 45)
 idTextBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 idTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-idTextBox.PlaceholderText = "Input ID..."
+idTextBox.PlaceholderText = "Input Music ID..."
 idTextBox.Text = ""
 idTextBox.TextSize = 14
 idTextBox.Font = Enum.Font.Gotham
@@ -62,7 +62,7 @@ local playCorner = Instance.new("UICorner")
 playCorner.CornerRadius = UDim.new(0, 8)
 playCorner.Parent = playButton
 
--- ปุ่มปิดสคริปต์ทั้งหมด (CLOSE)
+-- ปุ่มปิดสคริปต์ (CLOSE)
 local closeButton = Instance.new("TextButton")
 closeButton.Size = UDim2.new(0.42, 0, 0, 40)
 closeButton.Position = UDim2.new(0.53, 0, 0, 95)
@@ -82,52 +82,28 @@ closeButton.MouseButton1Click:Connect(function()
     screenGui:Destroy()
 end)
 
--- ฟังก์ชันแปลง String Obfuscation + Buffer Overflow Padding
-local function createObfuscatedPayload(musicId, fakeId)
-    local rawText = musicId .. "&" .. fakeId .. "&กันดัก240ค้าบบไอต้าววววววว"
-    
-    local encodedBuffer = ""
-    for i = 1, #rawText do
-        local byteVal = string.byte(rawText, i)
-        encodedBuffer = encodedBuffer .. "\\" .. byteVal
-    end
-    
-    local padding = string.rep("~[BYPASS_BUFFER]~", 15) 
-    return encodedBuffer .. padding
-end
-
--- ระบบส่งเพลงแบบไม่แย่ง Parent ของเกม
+-- ระบบส่งเพลงจริงตรงๆ (ไม่มีเพลงปลอม)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local toolEvent = ReplicatedStorage:WaitForChild("RE", 5) and ReplicatedStorage.RE:WaitForChild("1Too1l", 5)
 local musicEvent = ReplicatedStorage:WaitForChild("RE", 5) and ReplicatedStorage.RE:WaitForChild("PlayerToolEvent", 5)
 
 playButton.MouseButton1Click:Connect(function()
-    local realMusicId = idTextBox.Text
-    local fakeMusicId = "97813398702843"
+    local musicId = idTextBox.Text
+    local fakeMusicId = "97813398702843" -- ใส่ไว้เผื่อโครงสร้าง Payload แต่ไม่ได้ใช้งานเล่นเพลงปลอม
     
-    if realMusicId ~= "" then
+    if musicId ~= "" then
         pcall(function()
-            -- 1. สั่งหยิบ Boombox ผ่าน Remote ของเกมตามปกติ
+            -- 1. สั่งหยิบ Boombox
             if toolEvent then
                 toolEvent:InvokeServer("PickingTools", "Boombox")
             end
             
-            -- รอจังหวะสั้นๆ ให้เซิร์ฟเวอร์เสกไอเทมเข้าตัว
             task.wait(0.5)
             
-            -- 2. ส่งเพลงปลอม / อินโทร (ที่แปลงรหัสแล้ว)
+            -- 2. ส่งเพลงจริงทันที
             if musicEvent then
-                local fakePayload = createObfuscatedPayload(fakeMusicId, fakeMusicId)
-                musicEvent:FireServer("ToolMusicText", fakePayload)
-            end
-            
-            -- 3. รอจังหวะอินโทร
-            task.wait(3)
-            
-            -- 4. ส่งเพลงจริงตามไป
-            if musicEvent then
-                local realPayload = createObfuscatedPayload(realMusicId, fakeMusicId)
-                musicEvent:FireServer("ToolMusicText", realPayload)
+                local payload = musicId .. "&" .. fakeMusicId .. "&กันดัก240ค้าบบไอต้าววววววว"
+                musicEvent:FireServer("ToolMusicText", payload)
             end
         end)
     else
@@ -135,7 +111,7 @@ playButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- ระบบลากหน้าต่าง (Draggable)
+-- ระบบลากหน้าต่าง UI (Draggable) รองรับทั้งเมาส์และนิ้วทัช
 local userInputService = game:GetService("UserInputService")
 local dragging, dragStart, startPos
 
