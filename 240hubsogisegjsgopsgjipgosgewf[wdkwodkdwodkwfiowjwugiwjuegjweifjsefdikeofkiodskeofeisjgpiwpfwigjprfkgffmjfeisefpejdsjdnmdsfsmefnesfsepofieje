@@ -1,13 +1,13 @@
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- ลบ UI เก่าทิ้งก่อนกันซ้ำ
-if playerGui:FindFirstChild("MusicControllerGui") then
-    playerGui.MusicControllerGui:Destroy()
+-- ลบ UI เก่าทิ้งกันซ้ำ
+if playerGui:FindFirstChild("SimpleMusicGUI") then
+    playerGui.SimpleMusicGUI:Destroy()
 end
 
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "MusicControllerGui"
+screenGui.Name = "SimpleMusicGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
@@ -25,7 +25,7 @@ uiCorner.Parent = mainFrame
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 35)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "240HUB Simple Player"
+titleLabel.Text = "240HUB Music"
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.TextSize = 15
 titleLabel.Font = Enum.Font.GothamBold
@@ -47,7 +47,6 @@ local boxCorner = Instance.new("UICorner")
 boxCorner.CornerRadius = UDim.new(0, 8)
 boxCorner.Parent = idTextBox
 
--- ปุ่มเล่นเพลง (PLAY)
 local playButton = Instance.new("TextButton")
 playButton.Size = UDim2.new(0.42, 0, 0, 40)
 playButton.Position = UDim2.new(0.05, 0, 0, 95)
@@ -62,7 +61,6 @@ local playCorner = Instance.new("UICorner")
 playCorner.CornerRadius = UDim.new(0, 8)
 playCorner.Parent = playButton
 
--- ปุ่มปิดสคริปต์ (CLOSE)
 local closeButton = Instance.new("TextButton")
 closeButton.Size = UDim2.new(0.42, 0, 0, 40)
 closeButton.Position = UDim2.new(0.53, 0, 0, 95)
@@ -82,36 +80,33 @@ closeButton.MouseButton1Click:Connect(function()
     screenGui:Destroy()
 end)
 
--- ระบบส่งเพลงจริงตรงๆ (ไม่มีเพลงปลอม)
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local toolEvent = ReplicatedStorage:WaitForChild("RE", 5) and ReplicatedStorage.RE:WaitForChild("1Too1l", 5)
-local musicEvent = ReplicatedStorage:WaitForChild("RE", 5) and ReplicatedStorage.RE:WaitForChild("PlayerToolEvent", 5)
-
+-- ระบบกดเล่นเพลง (อิงตามโค้ด Cobalt ที่ให้มา)
 playButton.MouseButton1Click:Connect(function()
     local musicId = idTextBox.Text
-    local fakeMusicId = "97813398702843" -- ใส่ไว้เผื่อโครงสร้าง Payload แต่ไม่ได้ใช้งานเล่นเพลงปลอม
     
     if musicId ~= "" then
         pcall(function()
-            -- 1. สั่งหยิบ Boombox
-            if toolEvent then
-                toolEvent:InvokeServer("PickingTools", "Boombox")
-            end
+            local Event = game:GetService("ReplicatedStorage").RE["1Too1l"]
+            Event:InvokeServer(
+                "PickingTools",
+                "Boombox"
+            )
             
-            task.wait(0.5)
+            task.wait(0.4)
             
-            -- 2. ส่งเพลงจริงทันที
+            -- ส่งคำสั่งเปิดเพลงผ่าน PlayerToolEvent
+            local musicEvent = game:GetService("ReplicatedStorage").RE:FindFirstChild("PlayerToolEvent")
             if musicEvent then
-                local payload = musicId .. "&" .. fakeMusicId .. "&กันดัก240ค้าบบไอต้าววววววว"
+                local payload = musicId .. "&" .. musicId .. "&กันดัก240ค้าบบไอต้าววววววว"
                 musicEvent:FireServer("ToolMusicText", payload)
             end
         end)
     else
-        warn("ยังไม่ได้กรอก ID เพลง!")
+        warn("กรุณากรอกไอดีเพลงก่อน!")
     end
 end)
 
--- ระบบลากหน้าต่าง UI (Draggable) รองรับทั้งเมาส์และนิ้วทัช
+-- ระบบลากหน้าต่าง UI (รองรับทั้งเมาส์และมือถือ)
 local userInputService = game:GetService("UserInputService")
 local dragging, dragStart, startPos
 
