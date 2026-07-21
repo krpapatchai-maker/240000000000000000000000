@@ -1,0 +1,120 @@
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MusicControllerGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 260, 0, 160)
+mainFrame.Position = UDim2.new(0.5, -130, 0.8, -80)
+mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 12)
+uiCorner.Parent = mainFrame
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 35)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "240HUB"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 16
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.Parent = mainFrame
+
+local idTextBox = Instance.new("TextBox")
+idTextBox.Size = UDim2.new(0.9, 0, 0, 35)
+idTextBox.Position = UDim2.new(0.05, 0, 0, 45)
+idTextBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+idTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+idTextBox.PlaceholderText = "Input ID..."
+idTextBox.Text = ""
+idTextBox.TextSize = 14
+idTextBox.Font = Enum.Font.Gotham
+idTextBox.ClearTextOnFocus = false
+idTextBox.Parent = mainFrame
+
+local boxCorner = Instance.new("UICorner")
+boxCorner.CornerRadius = UDim.new(0, 8)
+boxCorner.Parent = idTextBox
+
+local playButton = Instance.new("TextButton")
+playButton.Size = UDim2.new(0.42, 0, 0, 75)
+playButton.Position = UDim2.new(0.05, 0, 0, 95)
+playButton.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+playButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+playButton.Text = "PLAY"
+playButton.TextSize = 14
+playButton.Font = Enum.Font.GothamBold
+playButton.Parent = mainFrame
+
+local playCorner = Instance.new("UICorner")
+playCorner.CornerRadius = UDim.new(0, 8)
+playCorner.Parent = playButton
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local event = ReplicatedStorage:WaitForChild("RE"):WaitForChild("PlayerToolEvent")
+
+playButton.MouseButton1Click:Connect(function()
+    print("Clicked!")
+    local musicId = idTextBox.Text
+    if musicId ~= "" and event then
+        pcall(function()
+            local fakeMusicId = "97813398702843"
+            local fullPayload = musicId .. "&" .. fakeMusicId .. "&" ..  [[ =[[ กันดัก240ค้าบไอโง่เอ้ย]] ]]
+            
+            event:FireServer(
+                "ToolMusicText",
+                fullPayload
+            )
+            print("Success ID: " .. musicId)
+        end)
+    end
+end)
+
+local userInputService = game:GetService("UserInputService")
+
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    mainFrame.Position = UDim2.new(
+        startPos.X.Scale, 
+        startPos.X.Offset + delta.X, 
+        startPos.Y.Scale, 
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+mainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+userInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
