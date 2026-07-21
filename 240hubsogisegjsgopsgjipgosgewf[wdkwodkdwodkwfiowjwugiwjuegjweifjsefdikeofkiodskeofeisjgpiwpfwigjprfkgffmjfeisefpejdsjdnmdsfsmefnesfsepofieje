@@ -25,7 +25,7 @@ uiCorner.Parent = mainFrame
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 35)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "240HUB (Draggable)"
+titleLabel.Text = "240HUB (Stable Fix)"
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.TextSize = 15
 titleLabel.Font = Enum.Font.GothamBold
@@ -86,20 +86,17 @@ end)
 local function createObfuscatedPayload(musicId, fakeId)
     local rawText = musicId .. "&" .. fakeId .. "&กันดัก240ค้าบบไอต้าววววววว"
     
-    -- 1. แปลงสตริงให้เป็นรหัสอักขระพิเศษ (Byte Escaping)
     local encodedBuffer = ""
     for i = 1, #rawText do
         local byteVal = string.byte(rawText, i)
         encodedBuffer = encodedBuffer .. "\\" .. byteVal
     end
     
-    -- 2. เติม Payload ขนาดยาวจำลอง Buffer Overflow
     local padding = string.rep("~[BYPASS_BUFFER]~", 15) 
-    
     return encodedBuffer .. padding
 end
 
--- ระบบส่งเพลงและหยิบ Boombox
+-- ระบบส่งเพลงแบบไม่แย่ง Parent ของเกม
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local toolEvent = ReplicatedStorage:WaitForChild("RE", 5) and ReplicatedStorage.RE:WaitForChild("1Too1l", 5)
 local musicEvent = ReplicatedStorage:WaitForChild("RE", 5) and ReplicatedStorage.RE:WaitForChild("PlayerToolEvent", 5)
@@ -110,35 +107,24 @@ playButton.MouseButton1Click:Connect(function()
     
     if realMusicId ~= "" then
         pcall(function()
-            -- 1. เรียกหยิบ Boombox เข้าตัว
+            -- 1. สั่งหยิบ Boombox ผ่าน Remote ของเกมตามปกติ
             if toolEvent then
                 toolEvent:InvokeServer("PickingTools", "Boombox")
             end
             
-            task.wait(0.6)
+            -- รอจังหวะสั้นๆ ให้เซิร์ฟเวอร์เสกไอเทมเข้าตัว
+            task.wait(0.5)
             
-            -- 2. บังคับย้าย Boombox มาถือในมือตัวละคร
-            local character = player.Character or player.CharacterAdded:Wait()
-            local backpack = player:FindFirstChildOfClass("Backpack")
-            if backpack then
-                local boombox = backpack:FindFirstChild("Boombox")
-                if boombox then
-                    boombox.Parent = character
-                end
-            end
-            
-            task.wait(0.3)
-            
-            -- 3. ส่งเพลงปลอม / อินโทร (ที่แปลงรหัสแล้ว)
+            -- 2. ส่งเพลงปลอม / อินโทร (ที่แปลงรหัสแล้ว)
             if musicEvent then
                 local fakePayload = createObfuscatedPayload(fakeMusicId, fakeMusicId)
                 musicEvent:FireServer("ToolMusicText", fakePayload)
             end
             
-            -- 4. รอจังหวะอินโทร
+            -- 3. รอจังหวะอินโทร
             task.wait(3)
             
-            -- 5. ส่งเพลงจริงตามไป
+            -- 4. ส่งเพลงจริงตามไป
             if musicEvent then
                 local realPayload = createObfuscatedPayload(realMusicId, fakeMusicId)
                 musicEvent:FireServer("ToolMusicText", realPayload)
@@ -149,7 +135,7 @@ playButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- ระบบลากหน้าต่าง (Draggable System) รองรับทั้งคอมและมือถือ
+-- ระบบลากหน้าต่าง (Draggable)
 local userInputService = game:GetService("UserInputService")
 local dragging, dragStart, startPos
 
