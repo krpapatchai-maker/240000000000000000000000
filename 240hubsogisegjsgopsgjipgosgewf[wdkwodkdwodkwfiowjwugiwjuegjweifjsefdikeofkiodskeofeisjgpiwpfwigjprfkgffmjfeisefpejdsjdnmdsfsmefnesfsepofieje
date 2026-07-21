@@ -82,7 +82,7 @@ closeButton.MouseButton1Click:Connect(function()
     screenGui:Destroy()
 end)
 
--- ระบบส่งเพลง (แยกด้วยเครื่องหมายขีดคั่น ไม่ให้ติดกันเป็นพืด)
+-- ระบบส่งเพลง (จัดการตัวแปรให้สะอาดและไม่ซ้ำกันแล้ว)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local event = ReplicatedStorage:WaitForChild("RE", 5) and ReplicatedStorage.RE:WaitForChild("PlayerToolEvent", 5)
 
@@ -90,8 +90,7 @@ playButton.MouseButton1Click:Connect(function()
     local musicId = idTextBox.Text
     if musicId ~= "" and event then
         pcall(function()
-            local fakeMusicId = "97813398702843"
-            -- เว้นระยะและใส่ขีดคั่นให้อ่านแยกกันชัดเจน
+            local fakeMusicId = "97813398702843" -- มีอันนี้แค่อันเดียวพอครับ
             local fullPayload = musicId .. " | " .. fakeMusicId .. " | " .. "กันดัก240ครับอิอิ"
             event:FireServer("ToolMusicText", fullPayload)
         end)
