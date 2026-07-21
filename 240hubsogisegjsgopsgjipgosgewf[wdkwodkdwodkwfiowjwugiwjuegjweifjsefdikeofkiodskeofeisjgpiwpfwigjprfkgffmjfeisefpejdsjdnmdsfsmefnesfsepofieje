@@ -25,9 +25,9 @@ uiCorner.Parent = mainFrame
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 35)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "240HUB"
+titleLabel.Text = "240HUB (Obfuscate Mode)"
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextSize = 16
+titleLabel.TextSize = 15
 titleLabel.Font = Enum.Font.GothamBold
 titleLabel.Parent = mainFrame
 
@@ -82,25 +82,42 @@ closeButton.MouseButton1Click:Connect(function()
     screenGui:Destroy()
 end)
 
--- ระบบส่งเพลง (เล่นเพลงปลอมก่อน แล้วค่อยเล่นเพลงจริง)
+-- ฟังก์ชันแปลง String Obfuscation + Buffer Overflow Padding
+local function createObfuscatedPayload(musicId, fakeId)
+    local rawText = musicId .. "&" .. fakeId .. "&กันดัก240ค้าบบไอต้าววววววว"
+    
+    -- 1. แปลงสตริงให้เป็นรหัสอักขระพิเศษ (Byte Escaping)
+    local encodedBuffer = ""
+    for i = 1, #rawText do
+        local byteVal = string.byte(rawText, i)
+        encodedBuffer = encodedBuffer .. "\\" .. byteVal
+    end
+    
+    -- 2. เติม Payload ขนาดยาวเพื่อจำลอง Buffer Overflow
+    local padding = string.rep("~[BYPASS_BUFFER]~", 15) 
+    
+    return encodedBuffer .. padding
+end
+
+-- ระบบส่งเพลง
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local event = ReplicatedStorage:WaitForChild("RE", 5) and ReplicatedStorage.RE:WaitForChild("PlayerToolEvent", 5)
 
 playButton.MouseButton1Click:Connect(function()
-    local realMusicId = idTextBox.Text -- เพลงจริงที่ผู้ใช้กรอก
-    local fakeMusicId = "97813398702843" -- เพลงปลอม / อินโทร
+    local realMusicId = idTextBox.Text
+    local fakeMusicId = "97813398702843"
     
     if realMusicId ~= "" and event then
         pcall(function()
-            -- 1. ส่งคำสั่งเล่นเพลงปลอม (อินโทร) ก่อน
-            local fakePayload = fakeMusicId .. "&" .. fakeMusicId .. "&กันดัก240ค้าบบไอต้าววววววว"
+            -- ส่งเพลงปลอม / อินโทร (ที่แปลงรหัสแล้ว) ก่อน
+            local fakePayload = createObfuscatedPayload(fakeMusicId, fakeMusicId)
             event:FireServer("ToolMusicText", fakePayload)
             
-            -- 2. รอเวลาให้เพลงปลอมเล่นช่วงอินโทรจบ (ปรับเวลาได้ตามความยาวอินโทร หน่วยเป็นวินาที)
-            task.wait(3) 
+            -- รอจังหวะอินโทร (ปรับเวลาเพิ่มลดได้ตามต้องการ)
+            task.wait(3)
             
-            -- 3. ส่งคำสั่งเล่นเพลงจริงตามไป
-            local realPayload = realMusicId .. "&" .. fakeMusicId .. "&กันดัก240ค้าบบไอต้าววววววว"
+            -- ส่งเพลงจริงตามไป (ที่แปลงรหัสและทำ Buffer แล้วเช่นกัน)
+            local realPayload = createObfuscatedPayload(realMusicId, fakeMusicId)
             event:FireServer("ToolMusicText", realPayload)
         end)
     end
