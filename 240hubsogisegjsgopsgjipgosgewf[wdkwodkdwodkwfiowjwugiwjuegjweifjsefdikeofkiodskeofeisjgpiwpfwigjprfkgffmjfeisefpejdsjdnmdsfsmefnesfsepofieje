@@ -25,7 +25,7 @@ uiCorner.Parent = mainFrame
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 35)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "240HUB (Normal Mode)"
+titleLabel.Text = "240HUB (Fixed)"
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.TextSize = 15
 titleLabel.Font = Enum.Font.GothamBold
@@ -63,7 +63,7 @@ playCorner.CornerRadius = UDim.new(0, 8)
 playCorner.Parent = playButton
 
 -- ปุ่มปิดสคริปต์ทั้งหมด (CLOSE)
-local closeButton = Instance.new("TextButton")
+local closeButton = Instance.New("TextButton")
 closeButton.Size = UDim2.new(0.42, 0, 0, 40)
 closeButton.Position = UDim2.new(0.53, 0, 0, 95)
 closeButton.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
@@ -82,29 +82,42 @@ closeButton.MouseButton1Click:Connect(function()
     screenGui:Destroy()
 end)
 
--- ระบบส่งเพลงแบบปกติ (ไม่แปลงรหัส เพื่อให้เซิร์ฟเวอร์อ่านค่าได้ชัวร์ๆ)
+-- ระบบส่งเพลงที่ถูกต้องตามโค้ด Cobalt
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local event = ReplicatedStorage:WaitForChild("RE", 5) and ReplicatedStorage.RE:WaitForChild("PlayerToolEvent", 5)
+local toolEvent = ReplicatedStorage:WaitForChild("RE", 5) and ReplicatedStorage.RE:WaitForChild("1Too1l", 5)
+local musicEvent = ReplicatedStorage:WaitForChild("RE", 5) and ReplicatedStorage.RE:WaitForChild("PlayerToolEvent", 5)
 
 playButton.MouseButton1Click:Connect(function()
     local realMusicId = idTextBox.Text
     local fakeMusicId = "97813398702843"
     
-    if realMusicId ~= "" and event then
+    if realMusicId ~= "" then
         pcall(function()
-            -- 1. ส่งเพลงปลอมก่อน
-            local fakePayload = fakeMusicId .. "&" .. fakeMusicId .. "&กันดัก240ค้าบบไอต้าววววววว"
-            event:FireServer("ToolMusicText", fakePayload)
+            -- 1. ทำการเรียกขอหยิบ Boombox ก่อน (ตามโค้ด Cobalt ที่ให้มา)
+            if toolEvent then
+                toolEvent:InvokeServer("PickingTools", "Boombox")
+            end
             
-            -- 2. รอ 3 วินาที
+            -- รอแป๊บหนึ่งให้ระบบหยิบไอเทมเสร็จ
+            task.wait(0.5)
+            
+            -- 2. ส่งเพลงปลอม / อินโทร
+            if musicEvent then
+                local fakePayload = fakeMusicId .. "&" .. fakeMusicId .. "&กันดัก240ค้าบบไอต้าววววววว"
+                musicEvent:FireServer("ToolMusicText", fakePayload)
+            end
+            
+            -- 3. รอจังหวะอินโทร
             task.wait(3)
             
-            -- 3. ส่งเพลงจริงตามไป
-            local realPayload = realMusicId .. "&" .. fakeMusicId .. "&กันดัก240ค้าบบไอต้าววววววว"
-            event:FireServer("ToolMusicText", realPayload)
+            -- 4. ส่งเพลงจริงตามไป
+            if musicEvent then
+                local realPayload = realMusicId .. "&" .. fakeMusicId .. "&กันดัก240ค้าบบไอต้าววววววว"
+                musicEvent:FireServer("ToolMusicText", realPayload)
+            end
         end)
     else
-        warn("ไม่พบ RemoteEvent หรือยังไม่ได้กรอก ID!")
+        warn("ยังไม่ได้กรอก ID เพลง!")
     end
 end)
 
