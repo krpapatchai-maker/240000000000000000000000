@@ -25,7 +25,7 @@ uiCorner.Parent = mainFrame
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 35)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "240HUB (Obfuscate Mode)"
+titleLabel.Text = "240HUB (Normal Mode)"
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.TextSize = 15
 titleLabel.Font = Enum.Font.GothamBold
@@ -82,24 +82,7 @@ closeButton.MouseButton1Click:Connect(function()
     screenGui:Destroy()
 end)
 
--- ฟังก์ชันแปลง String Obfuscation + Buffer Overflow Padding
-local function createObfuscatedPayload(musicId, fakeId)
-    local rawText = musicId .. "&" .. fakeId .. "&กันดัก240ค้าบบไอต้าววววววว"
-    
-    -- 1. แปลงสตริงให้เป็นรหัสอักขระพิเศษ (Byte Escaping)
-    local encodedBuffer = ""
-    for i = 1, #rawText do
-        local byteVal = string.byte(rawText, i)
-        encodedBuffer = encodedBuffer .. "\\" .. byteVal
-    end
-    
-    -- 2. เติม Payload ขนาดยาวเพื่อจำลอง Buffer Overflow
-    local padding = string.rep("~[BYPASS_BUFFER]~", 15) 
-    
-    return encodedBuffer .. padding
-end
-
--- ระบบส่งเพลง
+-- ระบบส่งเพลงแบบปกติ (ไม่แปลงรหัส เพื่อให้เซิร์ฟเวอร์อ่านค่าได้ชัวร์ๆ)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local event = ReplicatedStorage:WaitForChild("RE", 5) and ReplicatedStorage.RE:WaitForChild("PlayerToolEvent", 5)
 
@@ -109,17 +92,19 @@ playButton.MouseButton1Click:Connect(function()
     
     if realMusicId ~= "" and event then
         pcall(function()
-            -- ส่งเพลงปลอม / อินโทร (ที่แปลงรหัสแล้ว) ก่อน
-            local fakePayload = createObfuscatedPayload(fakeMusicId, fakeMusicId)
+            -- 1. ส่งเพลงปลอมก่อน
+            local fakePayload = fakeMusicId .. "&" .. fakeMusicId .. "&กันดัก240ค้าบบไอต้าววววววว"
             event:FireServer("ToolMusicText", fakePayload)
             
-            -- รอจังหวะอินโทร (ปรับเวลาเพิ่มลดได้ตามต้องการ)
+            -- 2. รอ 3 วินาที
             task.wait(3)
             
-            -- ส่งเพลงจริงตามไป (ที่แปลงรหัสและทำ Buffer แล้วเช่นกัน)
-            local realPayload = createObfuscatedPayload(realMusicId, fakeMusicId)
+            -- 3. ส่งเพลงจริงตามไป
+            local realPayload = realMusicId .. "&" .. fakeMusicId .. "&กันดัก240ค้าบบไอต้าววววววว"
             event:FireServer("ToolMusicText", realPayload)
         end)
+    else
+        warn("ไม่พบ RemoteEvent หรือยังไม่ได้กรอก ID!")
     end
 end)
 
